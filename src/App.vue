@@ -40,35 +40,27 @@
 								type="text"
 								name="wallet"
 								id="wallet"
+								ref="tickerInput"
 								class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
 								placeholder="Например DOGE"
 							/>
 						</div>
 						<div
+							v-if="ticker && filteredNames.length"
 							class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
 						>
 							<span
+								v-for="coin in filteredNames"
+								:key="coin.Symbol"
+								@click="handleChoice(coin.Symbol)"
 								class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
 							>
-								BTC
-							</span>
-							<span
-								class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-							>
-								DOGE
-							</span>
-							<span
-								class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-							>
-								BCH
-							</span>
-							<span
-								class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-							>
-								CHD
+								{{ coin.Symbol }}
 							</span>
 						</div>
-						<div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+						<div v-if="isAddingError" class="text-sm text-red-600">
+							Такой тикер уже добавлен
+						</div>
 					</div>
 				</div>
 				<button
@@ -201,7 +193,7 @@
 </template>
 
 <script>
-import { subscribeToTicker, unsubscribeToTicker } from "./api";
+import { subscribeToTicker, unsubscribeToTicker, getCoinsList } from "./api";
 export default {
 	name: "App",
 
@@ -218,12 +210,12 @@ export default {
 
 			isLoader: true,
 			page: 1,
+
+			isAddingError: false,
 		};
 	},
 
-	created() {
-		this.isLoader = false;
-
+	async created() {
 		const windowData = Object.fromEntries(
 			new URL(window.location).searchParams.entries()
 		);
@@ -246,6 +238,21 @@ export default {
 				);
 			});
 		}
+
+		let coinsData = localStorage.getItem("coins-name-list");
+
+		if (coinsData) {
+			this.isLoader = false;
+		} else {
+			const coinsNames = await getCoinsList();
+			this.isLoader = false;
+			coinsData = localStorage.setItem(
+				"coins-name-list",
+				JSON.stringify(coinsNames)
+			);
+		}
+
+		this.coinsList = coinsData ? JSON.parse(coinsData) : [];
 	},
 
 	computed: {
@@ -287,6 +294,14 @@ export default {
 				page: this.page,
 			};
 		},
+
+		filteredNames() {
+			return this.coinsList
+				.filter((coin) =>
+					coin.Symbol.toUpperCase().includes(this.ticker.toUpperCase())
+				)
+				.slice(0, 4);
+		},
 	},
 
 	methods: {
@@ -313,17 +328,30 @@ export default {
 			}
 		},
 
-		filteredCoins() {
-			return this.coinsList.map((coin) => {
-				console.log(coin);
-			});
+		handleChoice(cryptoName) {
+			this.ticker = cryptoName;
+			this.$refs.tickerInput.focus();
+			this.isAddingError = false;
 		},
 
 		add() {
 			const currentTicker = {
-				name: this.ticker,
+				name: this.ticker.toUpperCase(),
 				price: "-",
 			};
+
+			if (this.tickers.length) {
+				const newTickersList = this.tickers.find(
+					(t) => t.name === this.ticker.toUpperCase()
+				);
+
+				if (newTickersList) {
+					this.isAddingError = true;
+					return;
+				} else {
+					this.isAddingError = false;
+				}
+			}
 
 			this.tickers = [...this.tickers, currentTicker];
 			this.ticker = "";

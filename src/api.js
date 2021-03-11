@@ -2,16 +2,24 @@ const API_KEY =
 	"007e40a1d992ab907d6960e0627091251a00b7b0a56b288c075ba9e53d0f18c3";
 const AGGREGATE_IDX = "5";
 const tickerHandlers = new Map();
+const searchParams = new URLSearchParams({
+	api_key: API_KEY,
+});
 const socket = new WebSocket(
-	`wss://streamer.cryptocompare.com/v2?api_key=${API_KEY}`
+	`wss://streamer.cryptocompare.com/v2?${searchParams.toString()}`
 );
+const restUrl = "https://min-api.cryptocompare.com/data/all/coinlist";
+const restSearchParams = new URLSearchParams({
+	summary: true,
+	api_key: API_KEY,
+});
 
 socket.addEventListener("message", (e) => {
 	const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice } = JSON.parse(
 		e.data
 	);
 
-	if (!type === AGGREGATE_IDX) {
+	if (!type === AGGREGATE_IDX || newPrice === undefined) {
 		return;
 	}
 
@@ -83,5 +91,20 @@ export const unsubscribeToTicker = (ticker) => {
 	tickerHandlers.delete(ticker);
 	unsunscribeFromTickerOnWs(ticker);
 };
+
+const fetchCoinsList = () =>
+	fetch(`${restUrl}?${restSearchParams.toString()}`)
+		.then((res) => res.json())
+		.then((raw) =>
+			Object.entries(raw.Data).map(([key, val]) => {
+				return {
+					Symbol: key,
+					FullName: val.FullName,
+				};
+			})
+		)
+		.catch((error) => console.log("Error Fetch: ", error));
+
+export const getCoinsList = async () => await fetchCoinsList();
 
 window.tickerHandlers = tickerHandlers;
