@@ -15,11 +15,20 @@ const restSearchParams = new URLSearchParams({
 });
 
 socket.addEventListener("message", (e) => {
-	const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice } = JSON.parse(
-		e.data
-	);
+	const {
+		TYPE: type,
+		FROMSYMBOL: currency,
+		PRICE: newPrice,
+		MESSAGE: mesText,
+		PARAMETER: params,
+	} = JSON.parse(e.data);
 
 	if (!type === AGGREGATE_IDX || newPrice === undefined) {
+		if (type === "500" && mesText === "INVALID_SUB") {
+			const paramsList = params.split('~');
+			const ticker = paramsList[2];
+			console.log(ticker);
+		}
 		return;
 	}
 
@@ -80,6 +89,20 @@ function unsunscribeFromTickerOnWs(ticker) {
 		subs: [`5~CCCAGG~${ticker}~USD`],
 	});
 }
+
+// function sunscribeToTickerOnWsBtc(ticker) {
+// 	sendToWsMessage({
+// 		action: "SubAdd",
+// 		subs: [`5~CCCAGG~${ticker}~BTC`],
+// 	});
+// }
+
+// function unsunscribeFromTickerOnWsBtc(ticker) {
+// 	sendToWsMessage({
+// 		action: "SubRemove",
+// 		subs: [`5~CCCAGG~${ticker}~BTC`],
+// 	});
+// }
 
 export const subscribeToTicker = (ticker, cb) => {
 	const subscribers = tickerHandlers.get(ticker) || [];
