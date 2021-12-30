@@ -6,15 +6,17 @@
       :content="selectedTicker.name + ' ' + '- USD'"
     />
     <molecule-graph v-model="maxGraphElements" :items="normalizedGraph" />
-    <atom-slot-btn class="absolute top-0 right-0" type="button" :handleClick="handleTickerClose">
-      <atom-close-svg />
-    </atom-slot-btn>
+    <atom-btn class="absolute top-0 right-0" type="button" @click="handleTickerClose">
+      <template v-slot:content>
+        <atom-close-svg />
+      </template>
+    </atom-btn>
   </section>
 </template>
 
 <script>
 import AtomTitle from "../atoms/AtomTitle.vue";
-import AtomSlotBtn from "../atoms/AtomSlotBtn.vue";
+import AtomBtn from "../atoms/AtomBtn.vue";
 import AtomCloseSvg from "../atoms/AtomCloseSvg.vue";
 import MoleculeGraph from "../molecules/MoleculeGraph.vue";
 
@@ -22,7 +24,7 @@ export default {
   name: "OrganismGraph",
   components: {
     AtomTitle,
-    AtomSlotBtn,
+    AtomBtn,
     AtomCloseSvg,
     MoleculeGraph,
   },

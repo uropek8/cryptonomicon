@@ -51,7 +51,7 @@ export default {
         return;
       }
 
-      this.maxGraphElements = this.$refs.graph.clientWidth / GRAPH_ELEMENT_WIDTH;
+      this.maxGraphElements = this.$refs.graph.clientWidth / this.$options.GRAPH_ELEMENT_WIDTH;
     },
   },
   beforeUnmount() {

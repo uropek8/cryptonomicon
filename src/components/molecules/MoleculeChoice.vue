@@ -1,31 +1,52 @@
 <template>
-  <div class="flex bg-white shadow-md p-1 mt-4 rounded-md shadow-md flex-wrap">
-    <atom-badge :items="filteredNames" :handleChoice="handleChoice" />
+  <div
+    v-if="filteredNames?.length"
+    class="flex bg-white shadow-md p-1 mt-2 rounded-md shadow-md flex-wrap"
+  >
+    <atom-badge
+      v-for="coin in filteredNames"
+      :key="coin"
+      :content="coin"
+      @click="handleBadgeClick(coin)"
+    />
   </div>
-  <atom-text v-if="isError" class="text-red-600" content="Такой тикер уже добавлен" />
 </template>
 
 <script>
 import AtomBadge from "../atoms/AtomBadge.vue";
-import AtomText from "../atoms/AtomText.vue";
 
 export default {
   name: "MoleculeChoice",
   components: {
     AtomBadge,
-    AtomText,
   },
   props: {
-    handleChoice: {
-      type: Function,
+    modelValue: {
+      type: String,
+      default: "",
+    },
+    allCoinsNames: {
+      type: Array,
       required: true,
     },
-    filteredNames: {
-      type: Array,
+  },
+  emits: {
+    "update:modelValue": null,
+  },
+  methods: {
+    handleBadgeClick(coin) {
+      this.$emit("update:modelValue", coin.toLowerCase());
     },
-    isError: {
-      type: Boolean,
-      default: false,
+  },
+  computed: {
+    filteredNames() {
+      if (this.modelValue !== "") {
+        return this.allCoinsNames
+          .filter((name) => name.toUpperCase().includes(this.modelValue.toUpperCase()))
+          .slice(0, 4);
+      } else {
+        return null;
+      }
     },
   },
 };

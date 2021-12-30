@@ -3,17 +3,15 @@
     <molecule-loader v-if="isLoader" />
     <div class="container">
       <organism-top-filter
-        v-model="ticker"
-        :filteredNames="filteredNames"
-        :isError="isAddingError"
-        :handleClick="addTicker"
-        :handleChoice="handleChoice"
+        v-model="searchCoin"
+        v-model:coin-tickers="tickers"
+        :addTicker="addTicker"
       />
       <template v-if="tickers.length">
         <molecule-filter
           name="Фильтр"
           :hasNextPage="hasNextPage"
-          v-model:input-filter="filter"
+          v-model:input-filter="filterCoin"
           v-model:current-page="page"
         />
         <hr class="w-full border-t border-gray-600 my-4" />
@@ -41,7 +39,8 @@
 </template>
 
 <script>
-import { subscribeToTicker, unsubscribeToTicker, getCoinsList } from "../api";
+import { subscribeToTicker, unsubscribeToTicker } from "../api/api";
+import { getCoinsNames } from "../storage/storage";
 import OrganismTopFilter from "./organisms/OrganismTopFilter.vue";
 import OrganismGraph from "./organisms/OrganismGraph.vue";
 import MoleculeLoader from "./molecules/MoleculeLoader.vue";
@@ -59,20 +58,19 @@ export default {
   },
   data() {
     return {
-      ticker: "",
-      filter: "",
+      searchCoin: "",
+      filterCoin: "",
       maxGraphElements: 1,
 
       tickers: [],
       selectedTicker: null,
 
       graph: [],
-      coinsList: [],
+      allCoinsNames: [],
 
       isLoader: true,
-      page: "1",
+      page: 1,
 
-      isAddingError: false,
       isPricedTicker: true,
     };
   },
@@ -81,11 +79,11 @@ export default {
     const windowData = Object.fromEntries(new URL(window.location).searchParams.entries());
 
     if (windowData.filter) {
-      this.filter = windowData.filter;
+      this.filterCoin = windowData.filter;
     }
 
     if (windowData.page) {
-      this.page = windowData.page;
+      this.page = Number(windowData.page);
     }
 
     const tickersData = localStorage.getItem("cryptonomicon-list");
@@ -97,17 +95,18 @@ export default {
       });
     }
 
-    let coinsData = localStorage.getItem("coins-name-list");
+    // let coinsNamesData = localStorage.getItem("coins-names");
 
-    if (coinsData) {
-      this.isLoader = false;
-    } else {
-      const coinsNames = await getCoinsList();
-      this.isLoader = false;
-      coinsData = localStorage.setItem("coins-name-list", JSON.stringify(coinsNames));
-    }
+    // if (coinsNamesData) {
+    //   coinsNamesData = JSON.parse(coinsNamesData);
+    // } else {
+    //   coinsNamesData = await getCoinsList();
 
-    this.coinsList = coinsData ? JSON.parse(coinsData) : [];
+    //   localStorage.setItem("coins-names", JSON.stringify(coinsNamesData));
+    // }
+
+    this.isLoader = false;
+    this.allCoinsNames = await getCoinsNames();
   },
 
   computed: {
@@ -120,7 +119,7 @@ export default {
     },
 
     filteredTickers() {
-      return this.tickers.filter((ticker) => ticker.name.includes(this.filter));
+      return this.tickers.filter((ticker) => ticker.name.includes(this.filterCoin.toUpperCase()));
     },
 
     paginatedTickers() {
@@ -143,15 +142,9 @@ export default {
 
     pageStateOptions() {
       return {
-        filter: this.filter,
+        filter: this.filterCoin,
         page: this.page,
       };
-    },
-
-    filteredNames() {
-      return this.coinsList
-        .filter((coin) => coin.Symbol.toUpperCase().includes(this.ticker.toUpperCase()))
-        .slice(0, 4);
     },
   },
 
@@ -178,32 +171,8 @@ export default {
       }
     },
 
-    handleChoice(cryptoName) {
-      this.ticker = cryptoName;
-      this.$refs.tickerInput.focus();
-      this.isAddingError = false;
-    },
-
-    addTicker() {
-      const currentTicker = {
-        name: this.ticker.toUpperCase(),
-        price: "-",
-      };
-
-      if (this.tickers.length) {
-        const newTickersList = this.tickers.find((t) => t.name === this.ticker.toUpperCase());
-
-        if (newTickersList) {
-          this.isAddingError = true;
-          return;
-        } else {
-          this.isAddingError = false;
-        }
-      }
-
-      this.tickers = [...this.tickers, currentTicker];
-      this.ticker = "";
-      this.filter = "";
+    addTicker(currentTicker) {
+      this.filterCoin = "";
 
       subscribeToTicker(currentTicker.name, (newPrice) =>
         this.updateTicker(currentTicker.name, newPrice)
