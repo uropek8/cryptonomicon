@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-if="filteredNames?.length"
-    class="flex bg-white shadow-md p-1 mt-2 rounded-md shadow-md flex-wrap"
-  >
+  <div class="flex bg-white shadow-md p-1 mt-2 rounded-md shadow-md flex-wrap">
     <atom-badge
       v-for="coin in filteredNames"
       :key="coin"
@@ -21,35 +18,18 @@ export default {
     AtomBadge,
   },
   props: {
-    modelValue: {
-      type: String,
-      default: "",
-    },
-    allCoinsNames: {
+    filteredNames: {
       type: Array,
-      required: true,
+      required: false,
     },
   },
   emits: {
-    "update:modelValue": null,
+    "select-bage": null,
   },
   methods: {
     handleBadgeClick(coin) {
-      this.$emit("update:modelValue", coin.toLowerCase());
-    },
-  },
-  computed: {
-    filteredNames() {
-      if (this.modelValue !== "") {
-        return this.allCoinsNames
-          .filter((name) => name.toUpperCase().includes(this.modelValue.toUpperCase()))
-          .slice(0, 4);
-      } else {
-        return null;
-      }
+      this.$emit("select-bage", coin.toLowerCase());
     },
   },
 };
 </script>
-
-<style></style>

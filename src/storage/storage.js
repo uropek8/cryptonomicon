@@ -1,15 +1,33 @@
 import { fetchCoinsNames } from "../api/api";
 
 export const getCoinsNames = async () => {
-  let coinsNamesData = localStorage.getItem("coins-names");
+  let namesData = localStorage.getItem("coins-names");
 
-  if (coinsNamesData) {
-    coinsNamesData = JSON.parse(coinsNamesData);
+  if (namesData) {
+    namesData = JSON.parse(namesData);
   } else {
-    coinsNamesData = await fetchCoinsNames();
-
-    localStorage.setItem("coins-names", JSON.stringify(coinsNamesData));
+    const coinsNames = await fetchCoinsNames();
+    
+    if (coinsNames) {
+      namesData = coinsNames;
+      
+      localStorage.setItem("coins-names", JSON.stringify(coinsNames));
+    } else {
+      namesData = [];
+    }
   }
 
-  return coinsNamesData;
-}
+  return namesData;
+};
+
+export const getAddedTickers = () => {
+  let tickersData = localStorage.getItem("cryptonomicon-list");
+
+  if (tickersData) {
+    tickersData = JSON.parse(tickersData);
+  } else {
+    tickersData = null;
+  }
+
+  return tickersData;
+};

@@ -16,12 +16,13 @@ socket.addEventListener("message", (e) => {
     TYPE: type,
     FROMSYMBOL: currency,
     PRICE: newPrice,
-    MESSAGE: mesText,
+    MESSAGE: msgText,
     PARAMETER: params,
   } = JSON.parse(e.data);
 
   if (!type === AGGREGATE_IDX || newPrice === undefined) {
-    if (type === "500" && mesText === "INVALID_SUB") {
+    // check for double converting
+    if (type === "500" && msgText === "INVALID_SUB") {
       const paramsList = params.split("~");
       const ticker = paramsList[2];
       console.log(ticker);
@@ -116,8 +117,8 @@ export const unsubscribeToTicker = (ticker) => {
   unsunscribeFromTickerOnWs(ticker);
 };
 
-export const fetchCoinsNames = () =>
-  fetch(`${restUrl}?${restSearchParams.toString()}`)
+export const fetchCoinsNames = async () =>
+  await fetch(`${restUrl}?${restSearchParams.toString()}`)
     .then((res) => res.json())
     .then((raw) =>
       Object.entries(raw.Data).map(([key]) => {

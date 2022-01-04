@@ -8,7 +8,7 @@
       id="wallet"
       ref="tickerInput"
       v-model="inputValue"
-      @keydown.enter="handleAdd"
+      @keydown.enter="handleAddTicker"
       placeholder="Например DOGE"
     />
   </div>
@@ -22,10 +22,6 @@ export default {
   name: "MoleculeInput",
   components: { AtomLabel, AtomInput },
   props: {
-    handleAdd: {
-      type: Function,
-      required: true,
-    },
     modelValue: {
       type: String,
       default: "",
@@ -33,6 +29,7 @@ export default {
   },
   emits: {
     "update:modelValue": null,
+    "add-ticker": null,
   },
   computed: {
     inputValue: {
@@ -44,6 +41,11 @@ export default {
       },
     },
   },
+  methods: {
+    handleAddTicker() {
+      this.$emit("add-ticker");
+    }
+  }
 };
 </script>
 

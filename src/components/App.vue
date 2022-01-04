@@ -2,36 +2,20 @@
   <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
     <molecule-loader v-if="isLoader" />
     <div class="container">
-      <organism-top-filter
-        v-model="searchCoin"
-        v-model:coin-tickers="tickers"
-        :addTicker="addTicker"
-      />
+      <organism-search @add-ticker="addTicker" />
       <template v-if="tickers.length">
-        <molecule-filter
-          name="Фильтр"
-          :hasNextPage="hasNextPage"
-          v-model:input-filter="filterCoin"
-          v-model:current-page="page"
+        <organism-tickers
+          v-model:tickers="tickers"
+          :selectedTicker="selectedTicker"
+          @select-ticker="selectTicker"
+          @remove-ticker="removeTicker"
         />
-        <hr class="w-full border-t border-gray-600 my-4" />
-        <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <molecule-coin-item
-            :items="paginatedTickers"
-            :selectedTicker="selectedTicker"
-            :isPricedTicker="isPricedTicker"
-            :handleSelectTicker="handleSelectTicker"
-            :handleDelete="handleDelete"
-          />
-        </dl>
-        <hr class="w-full border-t border-gray-600 my-4" />
       </template>
       <template v-if="selectedTicker">
         <organism-graph
-          :selectedTicker="selectedTicker"
-          v-model="maxGraphElements"
-          :normalizedGraph="normalizedGraph"
-          :handleTickerClose="handleTickerClose"
+          v-model:graph="graph"
+          :ticker-name="tickerName"
+          @close-graph="closeGraph"
         />
       </template>
     </div>
@@ -40,56 +24,47 @@
 
 <script>
 import { subscribeToTicker, unsubscribeToTicker } from "../api/api";
-import { getCoinsNames } from "../storage/storage";
-import OrganismTopFilter from "./organisms/OrganismTopFilter.vue";
+import { getAddedTickers } from "../storage/storage";
+import OrganismSearch from "./organisms/OrganismSearch.vue";
+// import OrganismTickers from "./organisms/OrganismTickers.vue";
+import OrganismTickers from "./organisms/OrganismTickers.vue";
 import OrganismGraph from "./organisms/OrganismGraph.vue";
 import MoleculeLoader from "./molecules/MoleculeLoader.vue";
-import MoleculeFilter from "./molecules/MoleculeFilter.vue";
-import MoleculeCoinItem from "./molecules/MoleculeCoinItem.vue";
 
 export default {
   name: "App",
   components: {
-    OrganismTopFilter,
+    OrganismSearch,
+    // OrganismTickers,
+    OrganismTickers,
     OrganismGraph,
     MoleculeLoader,
-    MoleculeFilter,
-    MoleculeCoinItem,
   },
   data() {
     return {
-      searchCoin: "",
-      filterCoin: "",
-      maxGraphElements: 1,
+      // searchCoin: "",
+      // filterCoin: "",
+      // maxGraphBars: 1,
 
       tickers: [],
       selectedTicker: null,
 
       graph: [],
-      allCoinsNames: [],
+      // allCoinsNames: [],
 
       isLoader: true,
-      page: 1,
-
-      isPricedTicker: true,
+      // page: 1,
     };
   },
 
-  async created() {
-    const windowData = Object.fromEntries(new URL(window.location).searchParams.entries());
+  created() {
+    const tickersData = getAddedTickers();
 
-    if (windowData.filter) {
-      this.filterCoin = windowData.filter;
-    }
-
-    if (windowData.page) {
-      this.page = Number(windowData.page);
-    }
-
-    const tickersData = localStorage.getItem("cryptonomicon-list");
+    // const tickersData = localStorage.getItem("cryptonomicon-list");
 
     if (tickersData) {
-      this.tickers = JSON.parse(tickersData);
+      this.tickers = tickersData;
+
       this.tickers.forEach((ticker) => {
         subscribeToTicker(ticker.name, (newPrice) => this.updateTicker(ticker.name, newPrice));
       });
@@ -106,46 +81,42 @@ export default {
     // }
 
     this.isLoader = false;
-    this.allCoinsNames = await getCoinsNames();
+    // this.allCoinsNames = await getCoinsNames();
   },
 
   computed: {
-    startPageIdx() {
-      return 6 * (this.page - 1);
+    tickerName() {
+      return this.selectedTicker?.name || "";
     },
-
-    endPageIdx() {
-      return 6 * this.page;
-    },
-
-    filteredTickers() {
-      return this.tickers.filter((ticker) => ticker.name.includes(this.filterCoin.toUpperCase()));
-    },
-
-    paginatedTickers() {
-      return this.filteredTickers.slice(this.startPageIdx, this.endPageIdx);
-    },
-
-    hasNextPage() {
-      return this.filteredTickers.length > this.endPageIdx;
-    },
-
-    normalizedGraph() {
-      const minValue = Math.min(...this.graph);
-      const maxValue = Math.max(...this.graph);
-
-      if (minValue === maxValue) {
-        return this.graph.map(() => 50);
-      }
-      return this.graph.map((price) => 5 + ((price - minValue) * 95) / (maxValue - minValue));
-    },
-
-    pageStateOptions() {
-      return {
-        filter: this.filterCoin,
-        page: this.page,
-      };
-    },
+    // startPageIdx() {
+    //   return 6 * (this.page - 1);
+    // },
+    // endPageIdx() {
+    //   return 6 * this.page;
+    // },
+    // filteredTickers() {
+    //   return this.tickers.filter((ticker) => ticker.name.includes(this.filterCoin.toUpperCase()));
+    // },
+    // paginatedTickers() {
+    //   return this.filteredTickers.slice(this.startPageIdx, this.endPageIdx);
+    // },
+    // hasNextPage() {
+    //   return this.filteredTickers.length > this.endPageIdx;
+    // },
+    // normalizedGraph() {
+    //   const minValue = Math.min(...this.graph);
+    //   const maxValue = Math.max(...this.graph);
+    //   if (minValue === maxValue) {
+    //     return this.graph.map(() => 50);
+    //   }
+    //   return this.graph.map((price) => 5 + ((price - minValue) * 95) / (maxValue - minValue));
+    // },
+    // pageStateOptions() {
+    //   return {
+    //     filter: this.filterCoin,
+    //     page: this.page,
+    //   };
+    // },
   },
 
   methods: {
@@ -156,30 +127,35 @@ export default {
           if (t === this.selectedTicker) {
             this.graph.push(price);
 
-            while (this.graph.length > this.maxGraphElements) {
-              this.graph.shift();
-            }
+            // while (this.graph.length > this.maxGraphBars) {
+            //   this.graph.shift();
+            // }
           }
 
           t.price = price;
         });
     },
 
-    async updateTickers() {
-      if (!this.tickers.length) {
-        return;
-      }
-    },
+    // async updateTickers() {
+    //   if (!this.tickers.length) {
+    //     return;
+    //   }
+    // },
 
     addTicker(currentTicker) {
-      this.filterCoin = "";
+      this.tickers = [...this.tickers, currentTicker];
+      // this.filterCoin = "";
 
       subscribeToTicker(currentTicker.name, (newPrice) =>
         this.updateTicker(currentTicker.name, newPrice)
       );
     },
 
-    handleDelete(tickerToRemove) {
+    selectTicker(ticker) {
+      this.selectedTicker = ticker;
+    },
+
+    removeTicker(tickerToRemove) {
       this.tickers = this.tickers.filter((el) => el !== tickerToRemove);
 
       if (this.selectedTicker === tickerToRemove) {
@@ -189,11 +165,7 @@ export default {
       unsubscribeToTicker(tickerToRemove.name);
     },
 
-    handleSelectTicker(tickerEl) {
-      this.selectedTicker = tickerEl;
-    },
-
-    handleTickerClose() {
+    closeGraph() {
       if (this.selectedTicker) {
         this.selectedTicker = null;
       }
@@ -204,28 +176,26 @@ export default {
     tickers() {
       localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
     },
-
     selectedTicker() {
       this.graph = [];
     },
+    // paginatedTickers() {
+    //   if (this.paginatedTickers.length === 0 && this.page > 1) {
+    //     this.page -= 1;
+    //   }
+    // },
 
-    paginatedTickers() {
-      if (this.paginatedTickers.length === 0 && this.page > 1) {
-        this.page -= 1;
-      }
-    },
+    // filterCoin() {
+    //   this.page = 1;
+    // },
 
-    filter() {
-      this.page = 1;
-    },
-
-    pageStateOptions(val) {
-      history.pushState(
-        null,
-        document.title,
-        `${window.location.pathname}?filter=${val.filter}&page=${val.page}`
-      );
-    },
+    // pageStateOptions(val) {
+    //   history.pushState(
+    //     null,
+    //     document.title,
+    //     `${window.location.pathname}?filter=${val.filter}&page=${val.page}`
+    //   );
+    // },
   },
 };
 </script>

@@ -1,25 +1,11 @@
 <template>
   <p>
     {{ name }}:
-    <atom-input
-      class="block pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-      type="text"
-      v-model="inputValue"
-    />
-    <atom-btn
-      v-if="page > 1"
-      class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-      type="button"
-      @click="handleClickBack"
-    >
+    <atom-input type="text" v-model="modelFilter" />
+    <atom-btn v-if="modelPage > 1" class="btn-main mx-2" type="button" @click="handleClickBack">
       <template v-slot:content>Назад</template>
     </atom-btn>
-    <atom-btn
-      v-if="hasNextPage"
-      class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-      type="button"
-      @click="handleClickNext"
-    >
+    <atom-btn v-if="hasNextPage" class="btn-main mx-2" type="button" @click="handleClickNext">
       <template v-slot:content>Вперед</template>
     </atom-btn>
   </p>
@@ -38,9 +24,9 @@ export default {
   props: {
     name: {
       type: String,
-      default: "",
+      default: "Фильтр",
     },
-    inputFilter: {
+    filterCoin: {
       type: String,
       default: "",
     },
@@ -54,19 +40,19 @@ export default {
     },
   },
   emits: {
-    "update:inputFilter": null,
+    "update:filterCoin": null,
     "update:currentPage": null,
   },
   computed: {
-    inputValue: {
+    modelFilter: {
       get() {
-        return this.inputFilter;
+        return this.filterCoin;
       },
       set(value) {
-        this.$emit("update:inputFilter", value);
+        this.$emit("update:filterCoin", value);
       },
     },
-    page: {
+    modelPage: {
       get() {
         return this.currentPage;
       },
@@ -77,13 +63,11 @@ export default {
   },
   methods: {
     handleClickBack() {
-      this.page = this.page - 1;
+      this.modelPage = this.modelPage - 1;
     },
     handleClickNext() {
-      this.page = this.page + 1;
+      this.modelPage = this.modelPage + 1;
     },
   },
 };
 </script>
-
-<style></style>
